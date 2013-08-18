@@ -1,10 +1,17 @@
 describe("Promise", function() {
-  var expectNotToBeCalled, promise, callback;
+  var expectNotToBeCalled, promise, callback, anotherCallback;
+
+  function fake(name) {
+    return jasmine.createSpy(name).andCallFake(function(value) {
+      return value;
+    });
+  }
 
   beforeEach(function() {
     promise = new Promise();
     expectNotToBeCalled = jasmine.createSpy("should not be called");
-    callback = jasmine.createSpy("a callback");
+    callback = fake("a callback");
+    anotherCallback = fake("another callback");
   });
 
   afterEach(function() {
@@ -39,7 +46,6 @@ describe("Promise", function() {
   });
 
   it("propagates the failure", function() {
-    anotherCallback = jasmine.createSpy("another callback");
     promise.then(expectNotToBeCalled)
            .then(expectNotToBeCalled, callback)
            .then(expectNotToBeCalled, anotherCallback);
@@ -49,5 +55,17 @@ describe("Promise", function() {
 
     expect(callback).toHaveBeenCalledWith("Oops!");
     expect(anotherCallback).toHaveBeenCalledWith("Oops!");
+  });
+
+  it("propagates the success", function() {
+    promise.then(callback)
+           .then()
+           .then(anotherCallback);
+
+
+    promise.resolve("Hurray!");
+
+    expect(callback).toHaveBeenCalledWith("Hurray!");
+    expect(anotherCallback).toHaveBeenCalledWith("Hurray!");
   });
 });
