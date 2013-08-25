@@ -34,6 +34,22 @@ describe("Promise", function() {
     expect(callback).toHaveBeenCalledWith("Oops!");
   });
 
+  it("allows binding a callback to already resolved promise", function() {
+    promise.resolve("Hurray!");
+
+    promise.then(callback, expectNotToBeCalled)
+
+    expect(callback).toHaveBeenCalledWith("Hurray!")
+  });
+
+  it("allows binding an errback to already rejected promise", function() {
+    promise.reject("Oops!");
+
+    promise.then(expectNotToBeCalled, callback);
+
+    expect(callback).toHaveBeenCalledWith("Oops!")
+  });
+
   it("runs all success callback when all promises were resolved", function() {
     promise.then(
       function(status) { return "resolved: " + status; },
