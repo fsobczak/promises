@@ -1,87 +1,89 @@
-describe("Promise", function() {
-  var expectNotToBeCalled, promise, callback, anotherCallback;
+$.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, promiseImpl) {
+  describe(label, function() {
+    var expectNotToBeCalled, promise, callback, anotherCallback;
 
-  function fake(name) {
-    return jasmine.createSpy(name).andCallFake(function(value) {
-      return value;
+    function fake(name) {
+      return jasmine.createSpy(name).andCallFake(function(value) {
+        return value;
+      });
+    }
+
+    beforeEach(function() {
+      promise = new promiseImpl();
+      expectNotToBeCalled = jasmine.createSpy("should not be called");
+      callback = fake("a callback");
+      anotherCallback = fake("another callback");
     });
-  }
 
-  beforeEach(function() {
-    promise = new Promise();
-    expectNotToBeCalled = jasmine.createSpy("should not be called");
-    callback = fake("a callback");
-    anotherCallback = fake("another callback");
-  });
-
-  afterEach(function() {
-    expect(expectNotToBeCalled).not.toHaveBeenCalled();
-  });
-
-  it("runs the success callback when promise was resolved", function() {
-    promise.then(callback, expectNotToBeCalled);
-
-    promise.resolve("Hurray!");
-
-    expect(callback).toHaveBeenCalledWith("Hurray!");
-  });
-
-  it("runs the error callback when promise was rejected", function() {
-    promise.then(expectNotToBeCalled, callback);
-
-    promise.reject("Oops!");
-
-    expect(callback).toHaveBeenCalledWith("Oops!");
-  });
-
-  it("allows binding a callback to already resolved promise", function() {
-    promise.resolve("Hurray!");
-
-    promise.then(callback, expectNotToBeCalled)
-
-    expect(callback).toHaveBeenCalledWith("Hurray!")
-  });
-
-  it("allows binding an errback to already rejected promise", function() {
-    promise.reject("Oops!");
-
-    promise.then(expectNotToBeCalled, callback);
-
-    expect(callback).toHaveBeenCalledWith("Oops!")
-  });
-
-  it("runs all success callback when all promises were resolved", function() {
-    promise.then(
-      function(status) { return "resolved: " + status; },
-      expectNotToBeCalled
-    ).then(callback, expectNotToBeCalled);
-
-    promise.resolve("Hurray!");
-
-    expect(callback).toHaveBeenCalledWith("resolved: Hurray!");
-  });
-
-  it("propagates the failure", function() {
-    promise.then(expectNotToBeCalled)
-           .then(expectNotToBeCalled, callback)
-           .then(expectNotToBeCalled, anotherCallback);
+    afterEach(function() {
+      expect(expectNotToBeCalled).not.toHaveBeenCalled();
+    });
 
 
-    promise.reject("Oops!");
+    it("runs the success callback when promise was resolved", function() {
+      promise.then(callback, expectNotToBeCalled);
 
-    expect(callback).toHaveBeenCalledWith("Oops!");
-    expect(anotherCallback).toHaveBeenCalledWith("Oops!");
-  });
+      promise.resolve("Hurray!");
 
-  it("propagates the success", function() {
-    promise.then(callback)
-           .then()
-           .then(anotherCallback);
+      expect(callback).toHaveBeenCalledWith("Hurray!");
+    });
+
+    it("runs the error callback when promise was rejected", function() {
+      promise.then(expectNotToBeCalled, callback);
+
+      promise.reject("Oops!");
+
+      expect(callback).toHaveBeenCalledWith("Oops!");
+    });
+
+    it("allows binding a callback to already resolved promise", function() {
+      promise.resolve("Hurray!");
+
+      promise.then(callback, expectNotToBeCalled)
+
+      expect(callback).toHaveBeenCalledWith("Hurray!")
+    });
+
+    it("allows binding an errback to already rejected promise", function() {
+      promise.reject("Oops!");
+
+      promise.then(expectNotToBeCalled, callback);
+
+      expect(callback).toHaveBeenCalledWith("Oops!")
+    });
+
+    it("runs all success callback when all promises were resolved", function() {
+      promise.then(
+        function(status) { return "resolved: " + status; },
+        expectNotToBeCalled).then(callback, expectNotToBeCalled);
+
+      promise.resolve("Hurray!");
+
+      expect(callback).toHaveBeenCalledWith("resolved: Hurray!");
+    });
+
+    it("propagates the failure", function() {
+      promise.then(expectNotToBeCalled)
+             .then(expectNotToBeCalled, callback)
+             .then(expectNotToBeCalled, anotherCallback);
 
 
-    promise.resolve("Hurray!");
+      promise.reject("Oops!");
 
-    expect(callback).toHaveBeenCalledWith("Hurray!");
-    expect(anotherCallback).toHaveBeenCalledWith("Hurray!");
+      expect(callback).toHaveBeenCalledWith("Oops!");
+      expect(anotherCallback).toHaveBeenCalledWith("Oops!");
+    });
+
+    it("propagates the success", function() {
+      promise.then(callback)
+             .then()
+             .then(anotherCallback);
+
+
+      promise.resolve("Hurray!");
+
+      expect(callback).toHaveBeenCalledWith("Hurray!");
+      expect(anotherCallback).toHaveBeenCalledWith("Hurray!");
+    });
   });
 });
