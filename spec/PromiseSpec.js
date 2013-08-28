@@ -1,4 +1,13 @@
-$.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, promiseImpl) {
+var QAdapter = function() {
+  var defer = Q.defer();
+  this.promise = defer.promise;
+  this.then = function(s, f) { return defer.promise.then(s, f); };
+  this.reject = function(status) { return defer.reject(status); };
+  this.resolve = function(status) { return defer.resolve(status); };
+}
+
+var implementations = {'Promise': Promise, 'jQuery Deferred': $.Deferred, 'q': QAdapter};
+$.each(implementations, function(label, promiseImpl) {
   describe(label, function() {
     var expectNotToBeCalled, promise, callback, anotherCallback;
 
@@ -19,13 +28,18 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
       expect(expectNotToBeCalled).not.toHaveBeenCalled();
     });
 
+    function expectToBeCalled(fun, val) {
+      setTimeout(function() {
+        expect(fun).toHaveBeenCalledWith(val);
+      });
+    }
 
     it("runs the success callback when promise was resolved", function() {
       promise.then(callback, expectNotToBeCalled);
 
       promise.resolve("Hurray!");
 
-      expect(callback).toHaveBeenCalledWith("Hurray!");
+      expectToBeCalled(callback, "Hurray!");
     });
 
     it("runs the error callback when promise was rejected", function() {
@@ -33,7 +47,7 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
 
       promise.reject("Oops!");
 
-      expect(callback).toHaveBeenCalledWith("Oops!");
+      expectToBeCalled(callback, "Oops!");
     });
 
     it("allows binding a callback to already resolved promise", function() {
@@ -41,7 +55,7 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
 
       promise.then(callback, expectNotToBeCalled)
 
-      expect(callback).toHaveBeenCalledWith("Hurray!")
+      expectToBeCalled(callback, "Hurray!")
     });
 
     it("allows binding an errback to already rejected promise", function() {
@@ -49,7 +63,7 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
 
       promise.then(expectNotToBeCalled, callback);
 
-      expect(callback).toHaveBeenCalledWith("Oops!")
+      expectToBeCalled(callback, "Oops!")
     });
 
     it("runs all success callback when all promises were resolved", function() {
@@ -59,7 +73,7 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
 
       promise.resolve("Hurray!");
 
-      expect(callback).toHaveBeenCalledWith("resolved: Hurray!");
+      expectToBeCalled(callback, "resolved: Hurray!");
     });
 
     it("propagates the failure", function() {
@@ -70,8 +84,8 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
 
       promise.reject("Oops!");
 
-      expect(callback).toHaveBeenCalledWith("Oops!");
-      expect(anotherCallback).toHaveBeenCalledWith("Oops!");
+      expectToBeCalled(callback, "Oops!");
+      expectToBeCalled(anotherCallback, "Oops!");
     });
 
     it("propagates the success", function() {
@@ -82,8 +96,8 @@ $.each({'Promise': Promise, 'jQuery Deferred': $.Deferred}, function(label, prom
 
       promise.resolve("Hurray!");
 
-      expect(callback).toHaveBeenCalledWith("Hurray!");
-      expect(anotherCallback).toHaveBeenCalledWith("Hurray!");
+      expectToBeCalled(callback, "Hurray!");
+      expectToBeCalled(anotherCallback, "Hurray!");
     });
   });
 });
