@@ -29,9 +29,12 @@ $.each(implementations, function(label, promiseImpl) {
     });
 
     function expectToBeCalled(fun, val) {
-      setTimeout(function() {
-        expect(fun).toHaveBeenCalledWith(val);
-      });
+        var done = false;
+        setTimeout(function () {
+            expect(fun).toHaveBeenCalledWith(val);
+            done = true;
+        }, 10);
+        waitsFor(function() { return done; }, 15);
     }
 
     it("runs the success callback when promise was resolved", function() {
@@ -76,7 +79,7 @@ $.each(implementations, function(label, promiseImpl) {
       expectToBeCalled(callback, "resolved: Hurray!");
     });
 
-    it("propagates the failure", function() {
+    it("propagates the failure - jQuery VERSION ", function() {
       promise.then(expectNotToBeCalled)
              .then(expectNotToBeCalled, callback)
              .then(expectNotToBeCalled, anotherCallback);
@@ -87,6 +90,18 @@ $.each(implementations, function(label, promiseImpl) {
       expectToBeCalled(callback, "Oops!");
       expectToBeCalled(anotherCallback, "Oops!");
     });
+
+  it("propagates the failure - PromiseA VERSION", function() {
+      promise.then(expectNotToBeCalled)
+          .then(expectNotToBeCalled, callback)
+          .then(anotherCallback, expectNotToBeCalled);
+
+
+      promise.reject("Oops!");
+
+      expectToBeCalled(callback, "Oops!");
+      expectToBeCalled(anotherCallback, "Oops!");
+  });
 
     it("propagates the success", function() {
       promise.then(callback)
